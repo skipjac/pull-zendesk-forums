@@ -1,14 +1,13 @@
 require 'rubygems'
 require 'httparty'
-require 'pp'
 require 'FileUtils'
-#require 'open-uri'
 require 'nokogiri'
 require 'crack'
 require 'uri'
 
 class Zenuser
   include HTTParty
+  #the URL of your Zendesk
   base_uri 'http://skipjack.zendesk.com'
   #headers 'content-type'  => 'application/xml'
   def initialize(u, p)
@@ -58,6 +57,7 @@ class Zenuser
    end       
 end
 
+#just use your admin email and password. if you use the token the pattern is 'email@email.com/token' 'thetoken' 
 x = Zenuser.new( 'skip@email.net', 'password')
 
 rootDir = "/Users/skip/Documents/Zendesk/test-forum"
