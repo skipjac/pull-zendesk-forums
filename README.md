@@ -18,3 +18,5 @@ local directory
 Your Zendesk URL
 
 In order to get nokogiri to work on the mac you need to have [GCC](https://github.com/kennethreitz/osx-gcc-installer/downloads) installed. 
+
+To run the script at the command line $ruby pull-zendesk-forum.rb
