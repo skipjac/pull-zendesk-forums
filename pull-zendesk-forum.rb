@@ -2,30 +2,29 @@ require 'rubygems'
 require 'httparty'
 require 'pp'
 require 'FileUtils'
-#require 'open-uri'
+require 'json'
 require 'nokogiri'
 require 'crack'
 require 'uri'
 
 class Zenuser
   include HTTParty
-  base_uri 'http://skipjack.zendesk.com'
-  #headers 'content-type'  => 'application/xml'
+  base_uri 'https://something.zendesk.com'
+  #headers 'content-type'  => 'application/json'
   def initialize(u, p)
       @auth = {:username => u, :password => p}
     end
   def get_entries(count)
     options = {:basic_auth => @auth}
-    #print options
-    self.class.get('/api/v1/entries.xml?page=' + count.to_s, options)
+    self.class.get(count.to_s, options)
   end
   def get_name(forum_id, rdir)
     options = {:basic_auth => @auth}
-    response = self.class.get('/api/v1/forums/' + forum_id.to_s + '.xml', options)
-    name = Crack::XML.parse(response.body)
+    response = self.class.get('/api/v2/forums/' + forum_id.to_s + '.json', options)
+    name = JSON.parse(response.body)
     if name['forum']['category_id'] != nil
-      cat = self.class.get('/api/v1/categories/' + name['forum']['category_id'].to_s  + '.xml', options)
-      catName = Crack::XML.parse(cat.body)
+      cat = self.class.get('/api/v2/categories/' + name['forum']['category_id'].to_s  + '.json', options)
+      catName = JSON.parse(cat.body)
       dir = rdir + "/" + catName['category']['name'] + "/"
       Dir.mkdir(dir) unless File.exists?(dir)
       forumName = catName['category']['name'] + "/" + forum_id.to_s + "-" + name['forum']['name'].to_s.gsub(/\s/,'-')
@@ -49,38 +48,36 @@ class Zenuser
           writeOut.close
         else
           puts "failed download " + imgURL
-          #File.delete(dir + file.split('=')[-1])
         end
       rescue
-        #File.delete(dir + file.split('=')[-1])
         puts "failed download " + imgURL
       end
    end       
 end
 
-x = Zenuser.new( 'skip@meail.net', 'password')
+x = Zenuser.new( 'skip@email.net', 'password')
 
-rootDir = "/Users/skip/Documents/Zendesk/test-forum"
-count = 1;
-while x.get_entries(1) do 
+rootDir = "/Users/smoore/Documents/Zendesk/v2-forum"
+count = '/api/v2/topics.json'
+while count != nil do
   test = x.get_entries(count)
-  testBody = Crack::XML.parse(test.body)
-  testBody['entries'].each do |entry|
-    dir = rootDir + "/" + x.get_name(entry['forum_id'], rootDir) + "/"
+  testBody = JSON.parse(test.body)
+  testBody['topics'].each do |topic|
+    dir = rootDir + "/" + x.get_name(topic['forum_id'], rootDir) + "/"
     Dir.mkdir(dir) unless File.exists?(dir)
-    File.open(dir + entry['id'].to_s + "-" + entry['title'].gsub(/\s/,'-').gsub(/\//,'-') + ".html", 'w+') do |the_file|
-      the_file.puts entry['body']
+    File.open(dir + topic['id'].to_s + "-" + topic['title'].gsub(/\s/,'-').gsub(/\//,'-') + ".html", 'w+') do |the_file|
+      the_file.puts topic['body']
     end
-    entry['attachments'].each do |attachment|
-      forumAttach = URI(attachment['url']).path + "?" + URI(attachment['url']).query
+    topic['attachments'].each do |attachment|
+      forumAttach = URI(attachment['content_url']).path + "?" + URI(attachment['content_url']).query
       x.get_attach(forumAttach, rootDir)
     end
-    ntest = Nokogiri::HTML(entry['body'])
+    ntest = Nokogiri::HTML(topic['body'])
     ntest.css('img').each do |img|
       if img['src'].split('/')[1] == 'attachments'
         x.get_attach(img['src'], rootDir)
       end
     end
   end
-  count += 1
+  count = testBody['next_page']
 end
