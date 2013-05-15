@@ -7,12 +7,17 @@ require 'nokogiri'
 require 'crack'
 require 'uri'
 
+login = ARGV[0]
+password = ARGV[1]
+zendeskURL = ARGV[3]
+infile = ARGV[2]
+
 class Zenuser
   include HTTParty
-  base_uri 'https://something.zendesk.com'
   #headers 'content-type'  => 'application/json'
-  def initialize(u, p)
+  def initialize(u, p, y)
       @auth = {:username => u, :password => p}
+      self.class.base_uri 'https://' + y + '.zendesk.com'
     end
   def get_entries(count)
     options = {:basic_auth => @auth}
@@ -55,9 +60,8 @@ class Zenuser
    end       
 end
 
-x = Zenuser.new( 'skip@email.net', 'password')
-
-rootDir = "/Users/smoore/Documents/Zendesk/v2-forum"
+x = Zenuser.new(login, password, zendeskURL)
+rootDir = infile
 count = '/api/v2/topics.json'
 while count != nil do
   test = x.get_entries(count)
