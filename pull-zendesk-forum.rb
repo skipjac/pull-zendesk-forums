@@ -9,12 +9,12 @@ require 'uri'
 
 login = ARGV[0]
 password = ARGV[1]
-zendeskURL = ARGV[3]
-infile = ARGV[2]
+zendeskURL = ARGV[2]
+infile = ARGV[3]
 
 class Zenuser
   include HTTParty
-  #headers 'content-type'  => 'application/json'
+  headers 'content-type'  => 'application/json'
   def initialize(u, p, y)
       @auth = {:username => u, :password => p}
       self.class.base_uri 'https://' + y + '.zendesk.com'
@@ -69,7 +69,7 @@ while count != nil do
   testBody['topics'].each do |topic|
     dir = rootDir + "/" + x.get_name(topic['forum_id'], rootDir) + "/"
     Dir.mkdir(dir) unless File.exists?(dir)
-    File.open(dir + topic['id'].to_s + "-" + topic['title'].gsub(/\s/,'-').gsub(/\//,'-') + ".html", 'w+') do |the_file|
+    File.open(dir + topic['id'].to_s + "-" + topic['title'].to_s.gsub(/\s/,'-').gsub(/\//,'-')[0,27] + ".html", 'w+') do |the_file|
       the_file.puts topic['body']
     end
     topic['attachments'].each do |attachment|
@@ -77,11 +77,11 @@ while count != nil do
       x.get_attach(forumAttach, rootDir)
     end
     ntest = Nokogiri::HTML(topic['body'])
-    ntest.css('img').each do |img|
-      if img['src'].split('/')[1] == 'attachments'
-        x.get_attach(img['src'], rootDir)
-      end
-    end
+    # ntest.css('img').each do |img|
+    #   if img['src'].split('/')[1] == 'attachments'
+    #     x.get_attach(img['src'], rootDir)
+    #   end
+    #end
   end
   count = testBody['next_page']
 end
