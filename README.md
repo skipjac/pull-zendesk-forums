@@ -12,7 +12,7 @@ require 'FileUtils'
 
 require 'uri'
 
-Just set the the following in the code. 
+Just set the following in the code. 
 user email and password
 local directory 
 Your Zendesk URL
